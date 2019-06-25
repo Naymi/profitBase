@@ -26,11 +26,11 @@
               </div>
             </el-col>
             <el-col :span="7">
-              <span>Введите количество комнат: {{ currentRoomCount }}</span>
-              <el-slider v-model="currentRoomCount" :min="1" :step="1" :max="3"></el-slider>
+              <span>Введите количество комнат: {{ currentRoomCount[0] }} - {{currentRoomCount[1]}}</span>
+              <el-slider range v-model="currentRoomCount" :min="1" :step="1" :max="3"></el-slider>
             </el-col>
           </el-row>
-          <div style="display:flex; justify-content: center">
+          <div class="paddingBox_l" style="display:flex; justify-content: center">
             <el-pagination
               layout="prev, pager, next"
               :total="filteredPropertys.length"
@@ -39,29 +39,10 @@
               :page-size="10"
             ></el-pagination>
           </div>
-          <div class="propertysGrid">
-            <div v-for="p in currentShowPropertys" :key="p.id" class="my-animate">
-              <property :data="p"/>
-            </div>
-          </div>
+          <property-list :data="currentShowPropertys" :process="process"/>
         </div>
       </el-main>
-      <el-aside width="400px">
-        <div v-if="currentHouse">
-          <div class="houseTitle">
-            <span>{{currentHouseData.title}}</span>
-          </div>
-          <div>
-            <span>{{currentHouseData.address.full}}</span>
-          </div>
-          <img
-            style="max-width: 100%; display:block;"
-            v-if="currentHouse"
-            :src="currentHouseData.image"
-            alt
-          >
-        </div>
-      </el-aside>
+      <app-aside :data="currentHouseData"/>
     </el-container>
   </div>
 </template>
@@ -71,56 +52,31 @@
   max-width: 1300px;
   margin: 0 auto;
 }
-.houseTitle {
-  text-transform: uppercase;
-  font-size: 20px;
-  text-align: center;
-}
-.propertysGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, 300px);
-  grid-gap: 30px;
-  justify-content: space-between;
-}
-@keyframes my {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-.my-animate {
-  animation: my 0.3s;
-}
 </style>
 
 
 <script>
 import axios from "axios"
-import property from "@/components/property"
+import appAside from "@/components/appAside"
+import propertyList from "@/components/propertyList"
 export default {
   components: {
-    property
+    propertyList,
+    appAside
   },
   mounted() {
     const coors = this.$el.getBoundingClientRect().bottom
     if (coors < window.innerHeight) {
-      this.getHouses()
-      this.getPropertys()
-        .then(r => {
+      Promise.all([this.getHouses(), this.getPropertys()])
+        .then(([houses, propertys]) => {
+          this.houses.push(...houses.data.data)
+          houses = Array.isArray(propertys.data.data[1])
+            ? [...propertys.data.data]
+            : propertys.data.data
+          this.propertys.push(...houses)
           this.process = false
-          let data = r.data.data
-          if (Array.isArray(data[1])) {
-            data = [...data]
-          }
-          this.propertys.push(...data)
         })
-        .catch(e => {
-          console.error(e)
-        })
+        .catch(e => alert("Произошла ошибка при загрузке данных"))
       return
     }
     const that = this
@@ -146,7 +102,7 @@ export default {
   data() {
     return {
       process: false,
-      currentRoomCount: 1,
+      currentRoomCount: [1, 3],
       propertys: [],
       houses: [],
       currentHouse: null,
@@ -163,7 +119,10 @@ export default {
     },
     filteredPropertys() {
       return this.propertys.filter(itm => {
-        if (this.currentHouse && itm.house_id === this.currentHouse) {
+        if (
+          (this.currentHouse && itm.house_id === this.currentHouse) ||
+          !this.currentHouse
+        ) {
           if (
             this.currentFloor &&
             itm.floor >= this.currentFloor[0] &&
@@ -171,7 +130,8 @@ export default {
           ) {
             if (
               this.currentRoomCount &&
-              this.currentRoomCount === itm.rooms_amount
+              itm.rooms_amount >= this.currentRoomCount[0] &&
+              itm.rooms_amount <= this.currentRoomCount[1]
             ) {
               return true
             }
@@ -213,16 +173,11 @@ export default {
       let data = new FormData()
       data.append("target", "house")
       this.process = true
-      axios({
+      return axios({
         method: "POST",
         url: "/api/",
         data
       })
-        .then(d => {
-          this.process = false
-          this.houses = d.data.data
-        })
-        .catch(e => console.error("e :", e))
     }
   }
 }

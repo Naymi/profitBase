@@ -1,0 +1,19 @@
+@import url("https://fonts.googleapis.com/css?family=Open+Sans&display=swap&subset=cyrillic,cyrillic-ext");
+@import "mixins";
+html,
+#app {
+  font-family: "Open Sans", sans-serif;
+}
+
+@keyframes fadeAndScaleIn {
+  0% {
+    transform: scale(0);
+
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+
+    opacity: 1;
+  }
+}

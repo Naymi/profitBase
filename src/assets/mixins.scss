@@ -1,0 +1,15 @@
+$paddings: (
+  s: 10px,
+  m: 15px,
+  l: 20px
+);
+:root {
+  @each $name, $v in $paddings {
+    --padding_#{$name}: #{$v};
+  }
+}
+@each $name, $v in $paddings {
+  .paddingBox_#{$name} {
+    padding: var(--padding_#{$name});
+  }
+}
