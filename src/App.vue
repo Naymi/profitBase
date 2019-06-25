@@ -5,7 +5,13 @@
         <div class="mainContainer">
           <el-row :gutter="40">
             <el-col :span="7">
-              <el-select :disabled="process" placeholder="Выберите дом" v-model="currentHouse">
+              <el-select
+                multiple
+                collapse-tags
+                :disabled="process"
+                placeholder="Выберите дом"
+                v-model="currentHouse"
+              >
                 <el-option v-for="i in houses" :key="i.id" :label="i.title" :value="i.id"></el-option>
               </el-select>
             </el-col>
@@ -105,7 +111,7 @@ export default {
       currentRoomCount: [1, 3],
       propertys: [],
       houses: [],
-      currentHouse: null,
+      currentHouse: [],
       currentFloor: [1, 14],
       page: 1
     }
@@ -120,8 +126,9 @@ export default {
     filteredPropertys() {
       return this.propertys.filter(itm => {
         if (
-          (this.currentHouse && itm.house_id === this.currentHouse) ||
-          !this.currentHouse
+          (this.currentHouse.length &&
+            this.currentHouse.find(house => house === itm.house_id)) ||
+          !this.currentHouse.length
         ) {
           if (
             this.currentFloor &&
@@ -139,23 +146,6 @@ export default {
         }
         return false
       })
-    }
-  },
-  watch: {
-    currentHouse(newValue) {
-      if (this.propertys.find(itm => itm.house_id === newValue)) {
-        return
-      }
-      this.process = true
-      this.getPropertys(newValue)
-        .then(r => {
-          this.process = false
-          let data = r.data.data
-          this.propertys.push(...data)
-        })
-        .catch(e => {
-          console.error(e)
-        })
     }
   },
   methods: {
