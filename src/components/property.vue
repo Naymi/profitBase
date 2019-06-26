@@ -214,8 +214,8 @@ export default {
     property() {
       let {
         floor: Этаж,
-        area: { area_total: Площадь },
-        price: { value: Цена },
+        area: Площадь,
+        price: Цена,
         rooms_amount: Комнатность
       } = this.data
       return {
